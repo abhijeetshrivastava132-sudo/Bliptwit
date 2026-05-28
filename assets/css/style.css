@@ -1,7 +1,8 @@
 @import url("../../style.css");
 
 /* Professional social-app login polish */
-#login-screen {
+#login-screen,
+#forgot-reset-screen {
   justify-content: flex-start;
   min-height: var(--app-height);
   padding: calc(var(--safe-top) + 44px) 22px calc(var(--safe-bottom) + 22px);
@@ -55,7 +56,8 @@
   color: var(--text-muted);
 }
 
-#login-screen .auth-form {
+#login-screen .auth-form,
+.forgot-reset-card {
   width: 100%;
   max-width: 390px;
   margin: 0 auto;
@@ -68,14 +70,16 @@
   backdrop-filter: blur(18px);
 }
 
-#login-screen .field-label {
+#login-screen .field-label,
+#forgot-reset-screen .field-label {
   color: var(--text-muted);
   font-size: 0.68rem;
   letter-spacing: 0.07em;
 }
 
 #login-screen input[type="text"],
-#login-screen input[type="password"] {
+#login-screen input[type="password"],
+#forgot-reset-screen input[type="text"] {
   min-height: 50px;
   border-radius: 15px;
   background: rgba(255, 255, 255, 0.045);
@@ -85,13 +89,15 @@
 }
 
 #login-screen input[type="text"]:focus,
-#login-screen input[type="password"]:focus {
+#login-screen input[type="password"]:focus,
+#forgot-reset-screen input[type="text"]:focus {
   background: rgba(255, 255, 255, 0.065);
   border-color: rgba(0, 201, 167, 0.62);
   box-shadow: 0 0 0 4px rgba(0, 201, 167, 0.10);
 }
 
-#login-screen .btn-primary {
+#login-screen .btn-primary,
+#forgot-reset-screen .btn-primary {
   min-height: 50px;
   margin-top: 4px;
   border-radius: 15px;
@@ -177,13 +183,82 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.forgot-reset-screen {
+  display: none;
+}
+
+.forgot-reset-screen.active {
+  display: flex;
+}
+
+.forgot-reset-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-top: 28px;
+}
+
+.forgot-back-btn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.forgot-reset-icon {
+  width: 66px;
+  height: 66px;
+  margin: 10px auto 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(0, 201, 167, 0.18), rgba(0, 150, 255, 0.14));
+  font-size: 1.65rem;
+}
+
+.forgot-reset-card h2 {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: -0.04em;
+}
+
+.forgot-reset-sub,
+.forgot-reset-note {
+  margin: 0;
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.forgot-field-group {
+  margin-top: 6px;
+}
+
+.forgot-login-btn {
+  min-height: 46px;
+  border-radius: 15px;
+}
+
+#forgot-reset-message {
+  min-height: 18px;
+  line-height: 1.4;
+}
+
 @media (max-width: 380px) {
-  #login-screen {
+  #login-screen,
+  #forgot-reset-screen {
     padding-left: 16px;
     padding-right: 16px;
   }
 
-  #login-screen .auth-form {
+  #login-screen .auth-form,
+  .forgot-reset-card {
     padding: 16px;
     border-radius: 22px;
   }
