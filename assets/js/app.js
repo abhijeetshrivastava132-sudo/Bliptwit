@@ -1,184 +1,231 @@
 import "../../app.js";
 import { getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
-const authInstance = getAuth(getApp());
-const googleProvider = new GoogleAuthProvider();
+const appInstance = getApp();
+const authInstance = getAuth(appInstance);
+const dbInstance = getFirestore(appInstance);
 
-function showLoginLoading(){
-  let loader = document.getElementById("google-login-loading");
-  if(!loader){
-    loader = document.createElement("div");
-    loader.id = "google-login-loading";
-    loader.innerHTML = `
-      <div style="position:fixed;inset:0;z-index:99999;background:rgba(7,9,15,.96);display:flex;align-items:center;justify-content:center;padding:24px;">
-        <div style="width:100%;max-width:320px;text-align:center;color:var(--text-primary);">
-          <div style="width:46px;height:46px;margin:0 auto 18px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:var(--accent-primary);animation:btSpin .8s linear infinite;"></div>
-          <div style="font-size:1.02rem;font-weight:650;margin-bottom:6px;">Opening Google</div>
-          <div style="font-size:.84rem;color:var(--text-secondary);line-height:1.5;">Continue in the sign-in window.</div>
+function authMessage(error){
+  const code = error?.code || "";
+  const msg = String(error?.message || "");
+  if(code.includes("permission-denied") || msg.includes("Missing or insufficient permissions")) return "Firebase rules update needed for username login/reset.";
+  if(code.includes("invalid-email")) return "Enter a valid email.";
+  if(code.includes("user-not-found")) return "Account not found.";
+  if(code.includes("wrong-password") || code.includes("invalid-credential")) return "Invalid username/email or password.";
+  if(code.includes("too-many-requests")) return "Too many attempts. Try again later.";
+  return error?.message || "Something went wrong.";
+}
+
+function usernameKey(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+async function resolveLoginEmail(value){
+  const cleaned = String(value || "").trim();
+  if(!cleaned) throw new Error("Enter username or email.");
+  if(cleaned.includes("@")) return cleaned;
+
+  const usernameSnap = await getDoc(doc(dbInstance, "usernames", usernameKey(cleaned)));
+  if(!usernameSnap.exists()) throw new Error("Username not found.");
+
+  const uid = usernameSnap.data()?.uid;
+  if(!uid) throw new Error("Account data incomplete.");
+
+  const userSnap = await getDoc(doc(dbInstance, "users", uid));
+  const email = userSnap.exists() ? userSnap.data()?.email : "";
+  if(!email) throw new Error("This username has no email login. Try Google sign-in.");
+  return email;
+}
+
+async function handleBetterLogin(event){
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+
+  const input = document.getElementById("login-username");
+  const password = document.getElementById("login-password");
+  const errorBox = document.getElementById("login-error");
+  const button = document.getElementById("login-submit");
+
+  if(!input || !password || !errorBox) return;
+  errorBox.style.color = "";
+  errorBox.textContent = "";
+
+  const id = input.value.trim();
+  const pass = password.value;
+  if(!id){ errorBox.textContent = "Enter username or email."; return; }
+  if(!pass){ errorBox.textContent = "Enter password."; return; }
+
+  try{
+    if(button){ button.disabled = true; button.textContent = "Signing in..."; }
+    const email = await resolveLoginEmail(id);
+    await signInWithEmailAndPassword(authInstance, email, pass);
+  }catch(error){
+    errorBox.textContent = authMessage(error);
+  }finally{
+    if(button){ button.disabled = false; button.textContent = "Sign In"; }
+  }
+}
+
+function createResetScreen(){
+  let resetScreen = document.getElementById("forgot-reset-screen");
+  if(resetScreen) return resetScreen;
+
+  resetScreen = document.createElement("div");
+  resetScreen.id = "forgot-reset-screen";
+  resetScreen.className = "screen forgot-reset-screen";
+  resetScreen.innerHTML = `
+    <div class="forgot-reset-card">
+      <button class="forgot-back-btn" id="forgot-back-btn" type="button" aria-label="Back to login">←</button>
+      <div class="forgot-reset-icon">🔐</div>
+      <h2>Reset Password</h2>
+      <p class="forgot-reset-sub">Enter your username or email. We'll send a secure password reset link to your registered email.</p>
+      <div class="field-group forgot-field-group">
+        <label class="field-label">Username or Email</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon">@</span>
+          <input type="text" id="forgot-identity-input" placeholder="Username or email" autocomplete="username" />
         </div>
       </div>
-    `;
-    document.body.appendChild(loader);
-  }
-  loader.style.display = "block";
-
-  if(!document.getElementById("google-login-style")){
-    const style = document.createElement("style");
-    style.id = "google-login-style";
-    style.textContent = `
-      @keyframes btSpin{to{transform:rotate(360deg)}}
-      #login-screen{
-        justify-content:center !important;
-        padding:calc(var(--safe-top) + 28px) 20px calc(var(--safe-bottom) + 24px) !important;
-        background:
-          radial-gradient(circle at 50% -12%, rgba(255,255,255,.08), transparent 28%),
-          radial-gradient(circle at 50% 110%, rgba(0,201,167,.10), transparent 30%),
-          #07090f !important;
-      }
-      #login-screen .login-logo-wrap{margin-bottom:24px !important;}
-      #login-screen .login-logo-icon{
-        width:68px !important;height:68px !important;border-radius:22px !important;
-        background:linear-gradient(135deg, #00c9a7, #0096ff) !important;
-        box-shadow:0 18px 42px rgba(0,201,167,.16) !important;
-        animation:none !important;
-      }
-      #login-screen .login-logo-icon svg{width:34px !important;height:34px !important;}
-      #login-screen .login-logo-text{font-size:1.72rem !important;font-weight:800 !important;letter-spacing:-.055em !important;}
-      #login-screen .login-logo-sub{font-size:.82rem !important;color:var(--text-muted) !important;margin-top:6px !important;}
-      #login-form{
-        max-width:388px;margin:0 auto;padding:22px 18px 18px !important;
-        border:1px solid rgba(255,255,255,.085);border-radius:26px;
-        background:rgba(255,255,255,.055);
-        box-shadow:0 26px 76px rgba(0,0,0,.34);
-        backdrop-filter:blur(18px);
-        gap:4px !important;
-      }
-      #google-login-btn{
-        min-height:54px !important;width:100% !important;border-radius:16px !important;
-        background:#ffffff !important;color:#111827 !important;border:1px solid rgba(255,255,255,.9) !important;
-        font-weight:700 !important;font-size:.96rem !important;letter-spacing:-.01em !important;
-        box-shadow:0 14px 32px rgba(0,0,0,.22) !important;
-        transition:transform .16s ease, opacity .16s ease !important;
-      }
-      #google-login-btn:active{transform:scale(.985);}
-      #google-login-btn:disabled{opacity:.72;}
-      #login-error{min-height:18px;font-size:.8rem;color:var(--danger) !important;}
-      .google-only-footer{margin-top:4px;text-align:center;color:var(--text-secondary);font-size:.75rem;line-height:1.5;}
-    `;
-    document.head.appendChild(style);
-  }
-}
-
-function hideLoginLoading(){
-  const loader = document.getElementById("google-login-loading");
-  if(loader) loader.style.display = "none";
-}
-
-function googleButtonMarkup(){
-  return `
-    <span style="width:20px;height:20px;display:inline-flex;margin-right:10px;align-items:center;justify-content:center;flex:0 0 auto;">
-      <svg viewBox="0 0 48 48" width="20" height="20"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.1 0 9.8-2 13.3-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.2 5.6l6.2 5.2C36.9 39.1 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-    </span>
-    Continue with Google
-  `;
-}
-
-function setupGoogleOnlyLogin(){
-  const signupForm = document.getElementById("signup-form");
-  const loginForm = document.getElementById("login-form");
-  const authToggle = document.querySelector(".auth-toggle");
-  const googleLoginBtn = document.getElementById("google-login-btn");
-  const googleSignupBtn = document.getElementById("google-signup-btn");
-  const loginScreen = document.getElementById("login-screen");
-  const loginError = document.getElementById("login-error");
-
-  if(!loginScreen || !loginForm || !googleLoginBtn) return;
-
-  showLoginLoading();
-  hideLoginLoading();
-
-  if(authToggle) authToggle.style.display = "none";
-  if(signupForm){
-    signupForm.classList.add("hidden");
-    signupForm.style.display = "none";
-  }
-
-  loginForm.classList.remove("hidden");
-  loginForm.style.display = "flex";
-
-  const hideItems = loginForm.querySelectorAll(".field-group, .btn-primary, .auth-divider, .auth-note");
-  hideItems.forEach(el=>el.style.display = "none");
-
-  if(loginError){
-    loginError.textContent = "";
-    loginError.style.display = "block";
-    loginError.style.textAlign = "center";
-  }
-
-  googleLoginBtn.innerHTML = googleButtonMarkup();
-  googleLoginBtn.style.display = "flex";
-  googleLoginBtn.style.justifyContent = "center";
-  googleLoginBtn.style.alignItems = "center";
-
-  if(googleSignupBtn) googleSignupBtn.style.display = "none";
-
-  let headline = document.getElementById("google-only-headline");
-  const headlineHtml = `
-    <div style="text-align:center;margin-bottom:2px;">
-      <h2 style="margin:0 0 6px;font-size:1.5rem;letter-spacing:-.045em;line-height:1.12;">Sign in to Bliptwit</h2>
-      <p style="margin:0 auto;color:var(--text-muted);font-size:.9rem;line-height:1.5;max-width:284px;">Continue to your account and start messaging securely.</p>
+      <div class="error-msg" id="forgot-reset-message"></div>
+      <button class="btn-primary" id="forgot-send-btn" type="button">Send Reset Link</button>
+      <button class="btn-cancel forgot-login-btn" id="forgot-login-btn" type="button">Back to Login</button>
+      <p class="forgot-reset-note">After clicking the email link, set a new password and return to Bliptwit.</p>
     </div>
   `;
-  if(!headline){
-    headline = document.createElement("div");
-    headline.id = "google-only-headline";
-    headline.innerHTML = headlineHtml;
-    loginForm.insertBefore(headline, loginForm.firstChild);
-  }else{
-    headline.innerHTML = headlineHtml;
+  document.getElementById("app")?.appendChild(resetScreen);
+  return resetScreen;
+}
+
+function showResetScreen(){
+  const loginScreen = document.getElementById("login-screen");
+  const resetScreen = createResetScreen();
+  loginScreen?.classList.remove("active");
+  resetScreen.classList.add("active");
+  const loginValue = document.getElementById("login-username")?.value?.trim() || "";
+  const resetInput = document.getElementById("forgot-identity-input");
+  if(resetInput){
+    resetInput.value = loginValue;
+    setTimeout(()=>resetInput.focus(), 80);
+  }
+}
+
+function showLoginFromReset(){
+  const loginScreen = document.getElementById("login-screen");
+  const resetScreen = document.getElementById("forgot-reset-screen");
+  resetScreen?.classList.remove("active");
+  loginScreen?.classList.add("active");
+}
+
+async function handleBetterPasswordReset(){
+  const input = document.getElementById("forgot-identity-input") || document.getElementById("login-username");
+  const messageBox = document.getElementById("forgot-reset-message") || document.getElementById("login-error");
+  const button = document.getElementById("forgot-send-btn");
+  if(!input || !messageBox) return;
+
+  messageBox.style.color = "";
+  messageBox.textContent = "";
+  const id = input.value.trim();
+  if(!id){ messageBox.textContent = "Enter your email or username first."; return; }
+
+  try{
+    if(button){ button.disabled = true; button.textContent = "Sending..."; }
+    const email = await resolveLoginEmail(id);
+    await sendPasswordResetEmail(authInstance, email);
+    messageBox.style.color = "var(--accent-primary)";
+    messageBox.textContent = "Reset link sent. Check Inbox, Promotions, or Spam.";
+  }catch(error){
+    messageBox.style.color = "";
+    messageBox.textContent = authMessage(error);
+  }finally{
+    if(button){ button.disabled = false; button.textContent = "Send Reset Link"; }
+  }
+}
+
+function setLoginMode(){
+  const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
+  const title = document.querySelector(".auth-page-title");
+  const sub = document.querySelector(".auth-page-sub");
+  if(signupForm) signupForm.classList.add("hidden");
+  if(loginForm) loginForm.classList.remove("hidden");
+  if(title) title.textContent = "Sign in to Bliptwit";
+  if(sub) sub.textContent = "Use your username/email and password, or continue with Google.";
+}
+
+function setSignupMode(){
+  const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
+  const title = document.querySelector(".auth-page-title");
+  const sub = document.querySelector(".auth-page-sub");
+  if(loginForm) loginForm.classList.add("hidden");
+  if(signupForm) signupForm.classList.remove("hidden");
+  if(title) title.textContent = "Create your Bliptwit account";
+  if(sub) sub.textContent = "Create an account with email and password, or continue with Google.";
+}
+
+function setupImprovedLoginPage(){
+  const loginScreen = document.getElementById("login-screen");
+  const loginForm = document.getElementById("login-form");
+  const signupForm = document.getElementById("signup-form");
+  const authToggle = document.querySelector(".auth-toggle");
+  const showSignupToggle = document.getElementById("show-signup-toggle");
+  const showLoginToggle = document.getElementById("show-login-toggle");
+  const loginTitle = document.querySelector(".auth-page-title");
+  const loginSub = document.querySelector(".auth-page-sub");
+  const loginSubmit = document.getElementById("login-submit");
+  const loginUsernameLabel = loginForm?.querySelector(".field-group:first-child .field-label");
+  const loginUsernameInput = document.getElementById("login-username");
+
+  if(!loginScreen || !loginForm || !signupForm) return;
+
+  setLoginMode();
+
+  if(authToggle) authToggle.style.display = "none";
+  if(loginTitle) loginTitle.textContent = "Sign in to Bliptwit";
+  if(loginSub) loginSub.textContent = "Use your username/email and password, or continue with Google.";
+  if(loginUsernameLabel) loginUsernameLabel.textContent = "Username or Email";
+  if(loginUsernameInput){
+    loginUsernameInput.placeholder = "Username or email";
+    loginUsernameInput.setAttribute("autocomplete", "username");
+  }
+  if(loginSubmit) loginSubmit.textContent = "Sign In";
+
+  let linksRow = document.getElementById("login-helper-links-row");
+  if(!linksRow && loginSubmit){
+    linksRow = document.createElement("div");
+    linksRow.id = "login-helper-links-row";
+    linksRow.className = "auth-links-row";
+    linksRow.innerHTML = `
+      <button class="auth-link-btn" id="forgot-password-btn" type="button">Forgot Password?</button>
+      <button class="auth-link-btn muted" id="login-new-user-btn" type="button">New user? Sign up</button>
+    `;
+    loginSubmit.insertAdjacentElement("afterend", linksRow);
   }
 
-  let oldFootnote = document.getElementById("google-only-footnote");
-  if(oldFootnote) oldFootnote.remove();
+  createResetScreen();
 
-  let footer = document.getElementById("google-only-footer");
-  if(!footer){
-    footer = document.createElement("div");
-    footer.id = "google-only-footer";
-    footer.className = "google-only-footer";
-    footer.textContent = "Secure sign-in powered by Google";
-    googleLoginBtn.insertAdjacentElement("afterend", footer);
-  }
+  const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+  const loginNewUserBtn = document.getElementById("login-new-user-btn");
 
-  googleLoginBtn.addEventListener("click", async event=>{
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-
-    try{
-      googleLoginBtn.disabled = true;
-      googleLoginBtn.textContent = "Loading...";
-      if(loginError) loginError.textContent = "";
-      showLoginLoading();
-      await signInWithPopup(authInstance, googleProvider);
-    }catch(error){
-      if(loginError){
-        const code = error?.code || "";
-        if(code.includes("popup-closed-by-user")) loginError.textContent = "Google sign-in cancelled";
-        else if(code.includes("popup-blocked")) loginError.textContent = "Allow popup for Google login";
-        else loginError.textContent = error?.message || "Google login failed";
-      }
-    }finally{
-      hideLoginLoading();
-      googleLoginBtn.disabled = false;
-      googleLoginBtn.innerHTML = googleButtonMarkup();
-    }
-  }, true);
+  loginSubmit?.addEventListener("click", handleBetterLogin, true);
+  loginForm?.addEventListener("submit", handleBetterLogin, true);
+  forgotPasswordBtn?.addEventListener("click", showResetScreen);
+  loginNewUserBtn?.addEventListener("click", setSignupMode);
+  showLoginToggle?.addEventListener("click", setLoginMode);
+  showSignupToggle?.addEventListener("click", setSignupMode);
+  document.getElementById("forgot-send-btn")?.addEventListener("click", handleBetterPasswordReset);
+  document.getElementById("forgot-back-btn")?.addEventListener("click", showLoginFromReset);
+  document.getElementById("forgot-login-btn")?.addEventListener("click", showLoginFromReset);
+  document.getElementById("forgot-identity-input")?.addEventListener("keydown", e=>{
+    if(e.key === "Enter") handleBetterPasswordReset();
+  });
 }
 
 if(document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", setupGoogleOnlyLogin);
+  document.addEventListener("DOMContentLoaded", setupImprovedLoginPage);
 }else{
-  setupGoogleOnlyLogin();
+  setupImprovedLoginPage();
 }
