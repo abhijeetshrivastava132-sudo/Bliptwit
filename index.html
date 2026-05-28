@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"/>
+  <title>Bliptwit — Modern Messenger</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="screen active">
+    <div class="login-logo-wrap">
+      <div class="login-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.12-.56-2.32-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+      </div>
+      <div class="login-logo-text">Bliptwit</div>
+      <div class="login-logo-sub">Simple. Fast. Secure.</div>
+    </div>
+
+    <div class="auth-toggle">
+      <button class="auth-toggle-btn active" id="show-signup-toggle">Create Account</button>
+      <button class="auth-toggle-btn" id="show-login-toggle">Sign In</button>
+    </div>
+
+    <div id="signup-form" class="auth-form">
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+          <input type="text" id="signup-username" placeholder="Your email address" autocomplete="email"/>
+        </div>
+        <div class="helper-text" id="signup-username-helper">Use a valid email address.</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span>
+          <input type="password" id="signup-password" placeholder="Create a password" maxlength="50"/>
+          <button type="button" class="password-toggle" data-target="signup-password">
+            <svg viewBox="0 0 24 24" width="18" height="18" id="eye-signup-password"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
+        </div>
+        <div class="helper-text" id="signup-password-helper">Min 6 characters.</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Confirm Password</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></span>
+          <input type="password" id="signup-confirm" placeholder="Confirm your password" maxlength="50"/>
+          <button type="button" class="password-toggle" data-target="signup-confirm">
+            <svg viewBox="0 0 24 24" width="18" height="18" id="eye-signup-confirm"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="error-msg" id="signup-error"></div>
+      <button class="btn-primary" id="signup-submit">Create Account</button>
+      <div class="auth-divider">or</div>
+      <button class="provider-btn" id="google-signup-btn" type="button">Continue with Google</button>
+      <div class="auth-note">Use Email/Password or Google. Username setup comes after sign-in.</div>
+    </div>
+
+    <div id="login-form" class="auth-form hidden">
+      <div class="field-group">
+        <label class="field-label">Email</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+          <input type="text" id="login-username" placeholder="Your email address" autocomplete="email"/>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span>
+          <input type="password" id="login-password" placeholder="Your password"/>
+          <button type="button" class="password-toggle" data-target="login-password">
+            <svg viewBox="0 0 24 24" width="18" height="18" id="eye-login-password"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="error-msg" id="login-error"></div>
+      <button class="btn-primary" id="login-submit">Sign In</button>
+      <div class="auth-divider">or</div>
+      <button class="provider-btn" id="google-login-btn" type="button">Continue with Google</button>
+      <div class="auth-note">Use Email/Password or Google.</div>
+    </div>
+  </div>
+
+  <!-- USERNAME SETUP SCREEN -->
+  <div id="username-setup-screen" class="screen">
+    <div class="username-setup-card">
+      <div class="login-logo-wrap" style="margin-bottom:10px;">
+        <div class="login-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="username-setup-title">Choose your username</div>
+        <div class="username-setup-sub">This is how people will find you on Bliptwit.</div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Username</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>
+          <input type="text" id="setup-username" placeholder="Choose a username" autocomplete="off" maxlength="24"/>
+        </div>
+        <div class="helper-text" id="setup-username-helper">Letters, numbers, underscore. Min 3 chars.</div>
+      </div>
+      <div class="error-msg" id="setup-username-error"></div>
+      <button class="btn-primary" id="setup-username-submit" type="button">Continue</button>
+      <button class="btn-cancel" id="setup-logout-btn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div id="main-screen" class="screen">
+    <header>
+      <span class="logo-text">Bliptwit</span>
+      <div class="header-right">
+        <button class="icon-btn" id="search-toggle-btn" title="Search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+        <button class="icon-btn" id="menu-trigger-btn" title="Menu">
+          <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="search-bar" id="search-bar" style="display:none;">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="search-input" placeholder="Search chats or users…" autocomplete="off"/>
+        <button class="search-clear" id="search-clear">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="chats">Chats <span class="tab-badge" id="chat-count" style="display:none;"></span></div>
+      <div class="tab" data-tab="requests">Requests <span class="tab-badge" id="req-tab-badge" style="display:none;"></span></div>
+    </div>
+
+    <div class="tab-panel active" id="tab-chats">
+      <div id="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <div class="empty-text">No chats yet.<br/>Send a request to start chatting.</div>
+        <button class="btn-add-first" id="add-chat-empty-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+          New Chat
+        </button>
+      </div>
+      <div id="chat-list"></div>
+      <button class="fab hidden" id="fab-btn">+</button>
+    </div>
+
+    <div class="tab-panel" id="tab-requests">
+      <div id="req-panel-content"></div>
+    </div>
+  </div>
+
+  <!-- CHAT SCREEN -->
+  <div id="chat-screen">
+    <div class="chat-bg"></div>
+    <div class="chat-header">
+      <button class="back-btn" id="back-btn">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+      <div class="chat-header-avatar" id="ch-avatar"></div>
+      <div class="chat-header-info" id="ch-header-info">
+        <div class="chat-header-name" id="ch-name"></div>
+        <div class="chat-header-sub" id="ch-status">online</div>
+      </div>
+      <div class="chat-header-actions">
+        <button class="icon-btn" id="chat-search-btn">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </button>
+        <button class="icon-btn" id="chat-more-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="messages-wrap" id="messages-wrap"></div>
+
+    <div class="typing-indicator" id="typing-indicator">
+      <div class="typing-bubble">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <!-- Voice Recording UI -->
+    <div class="voice-recording-ui" id="voice-recording-ui">
+      <div class="recording-indicator"></div>
+      <span class="recording-timer" id="recording-timer">00:00</span>
+      <span class="recording-hint">Recording voice message...</span>
+      <button class="btn-cancel-recording" id="btn-cancel-recording">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+      <button class="btn-send-recording" id="btn-send-recording">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+
+    <div class="reply-bar" id="reply-bar">
+      <div class="reply-bar-accent"></div>
+      <div class="reply-bar-info">
+        <div class="reply-bar-label" id="reply-to-name"></div>
+        <div class="reply-bar-text" id="reply-to-text"></div>
+      </div>
+      <button class="reply-bar-close" id="reply-bar-close">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </button>
+    </div>
+
+    <div class="input-bar">
+      <div class="input-icon-btn">
+        <label for="img-upload">
+          <svg viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+        </label>
+        <input type="file" id="img-upload" accept="image/*" style="display:none;"/>
+      </div>
+      <div class="msg-input-wrap">
+        <textarea id="msg-input" placeholder="Message" rows="1"></textarea>
+      </div>
+      <!-- Mic button for voice messages -->
+      <button class="mic-btn" id="mic-btn" title="Hold to record voice message">
+        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+      </button>
+      <button class="send-btn" id="send-btn" disabled>
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+
+    <div class="blocked-chat-footer" id="blocked-chat-footer">
+      <div class="blocked-chat-text" id="blocked-chat-text">This account is blocked.</div>
+      <div class="blocked-chat-actions">
+        <button class="blocked-footer-btn delete" id="blocked-delete-chat-btn" type="button">Delete</button>
+        <button class="blocked-footer-btn unblock" id="blocked-unblock-btn" type="button">Unblock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE VIEWER -->
+  <div id="img-viewer">
+    <div class="img-viewer-header">
+      <button class="back-btn" id="img-viewer-close">
+        <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      </button>
+    </div>
+    <img id="img-viewer-img" src="" alt=""/>
+  </div>
+
+  <!-- CONTEXT MENU -->
+  <div class="ctx-overlay" id="ctx-overlay">
+    <div id="ctx-wrap-inner" class="ctx-wrap">
+      <div id="ctx-bubble-clone"></div>
+      <div class="ctx-menu" id="ctx-menu">
+        <div class="ctx-item" id="ctx-reply">
+          <svg viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Reply
+        </div>
+        <div class="ctx-item" id="ctx-react">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>React
+        </div>
+        <div class="ctx-item" id="ctx-copy">
+          <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copy
+        </div>
+        <div class="ctx-item danger" id="ctx-delete" style="display:none;">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REACTION PICKER -->
+  <div class="reaction-picker-overlay" id="reaction-picker-overlay">
+    <div class="reaction-picker" id="reaction-picker">
+      <button data-emoji="👍">👍</button>
+      <button data-emoji="❤️">❤️</button>
+      <button data-emoji="😂">😂</button>
+      <button data-emoji="😮">😮</button>
+      <button data-emoji="😢">😢</button>
+      <button data-emoji="🙏">🙏</button>
+    </div>
+  </div>
+
+  <!-- MENU DRAWER -->
+  <div class="menu-overlay" id="menu-overlay">
+    <div class="menu-drawer">
+      <div class="menu-profile">
+        <div class="menu-avatar" id="menu-avatar-letter">?</div>
+        <div class="menu-name" id="menu-username">—</div>
+        <div class="menu-sub">Bliptwit account</div>
+      </div>
+      <div class="menu-item" id="menu-change-username">
+        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        Change Username
+      </div>
+      <div class="menu-item" id="menu-change-password">
+        <svg viewBox="0 0 24 24"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+        Change Password
+      </div>
+      <div class="menu-item" id="menu-block-list">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/></svg>
+        Blocked Users
+      </div>
+      <div class="menu-item" id="menu-delete-account" style="color:var(--danger);">
+        <svg viewBox="0 0 24 24" style="color:var(--danger);"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        Delete Account
+      </div>
+      <div class="menu-item danger" id="menu-logout">
+        <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        Log Out
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION SHEET -->
+  <div class="action-sheet-overlay" id="action-sheet">
+    <div class="action-sheet">
+      <div class="action-sheet-handle"></div>
+      <div class="action-sheet-title" id="action-sheet-title"></div>
+      <div class="action-sheet-item" id="action-view-profile">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        View Profile
+      </div>
+      <div class="action-sheet-divider"></div>
+      <div class="action-sheet-item" id="action-auto-delete-menu">
+        <svg viewBox="0 0 24 24"><path d="M12 1a11 11 0 1 0 11 11h-2a9 9 0 1 1-2.64-6.36L15 9h8V1l-3.22 3.22A10.96 10.96 0 0 0 12 1zm1 5h-2v7l6 3 1-1.73-5-2.27V6z"/></svg>
+        Auto delete
+        <span class="action-sheet-current" id="action-auto-delete-current">Never</span>
+      </div>
+      <div class="auto-delete-submenu" id="auto-delete-submenu">
+        <div class="action-sheet-item auto-delete-back" id="auto-delete-back">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          Auto delete options
+        </div>
+        <div class="disappear-options" id="disappear-options">
+          <button class="disappear-option" type="button" data-auto-delete-mode="never">Never</button>
+          <button class="disappear-option" type="button" data-auto-delete-mode="after_viewing">After viewing</button>
+          <button class="disappear-option" type="button" data-auto-delete-mode="1_hour_after_viewing">1 hour after viewing</button>
+          <button class="disappear-option" type="button" data-auto-delete-mode="24_hours_after_viewing">24 hours after viewing</button>
+        </div>
+      </div>
+      <div class="action-sheet-divider"></div>
+      <div class="action-sheet-item danger" id="action-block-user">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/></svg>
+        Block User
+      </div>
+      <div class="action-sheet-item danger" id="action-delete-chat">
+        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        Delete Chat
+      </div>
+      <div class="action-sheet-divider"></div>
+      <div class="action-sheet-item" id="action-cancel">Cancel</div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">New Chat Request</div>
+      <div class="modal-hint">Enter a username to send them a chat request.</div>
+      <div class="input-wrap input-with-icon">
+        <span class="field-icon"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg></span>
+        <input type="text" id="new-chat-input" placeholder="Username" autocomplete="off" maxlength="24"/>
+      </div>
+      <div class="error-msg" id="modal-error"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="modal-cancel-btn">Cancel</button>
+        <button class="btn-confirm" id="send-request-btn">Send Request</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="change-username-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Change Username</div>
+      <input type="text" id="new-username-input" class="inline-input" placeholder="New username" maxlength="24"/>
+      <div class="error-msg" id="username-change-error"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="cancel-username-btn">Cancel</button>
+        <button class="btn-confirm" id="confirm-username-btn">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="change-password-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Change Password</div>
+      <input type="password" id="old-password-input" class="inline-input" placeholder="Current password"/>
+      <input type="password" id="new-password-input" class="inline-input" placeholder="New password (min 6 chars)" style="margin-top:10px;"/>
+      <input type="password" id="confirm-new-password-input" class="inline-input" placeholder="Confirm new password" style="margin-top:10px;"/>
+      <div class="error-msg" id="password-change-error"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="cancel-password-btn">Cancel</button>
+        <button class="btn-confirm" id="confirm-password-btn">Update</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="block-list-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Blocked Users</div>
+      <div id="block-list-content" style="min-height:60px;max-height:280px;overflow-y:auto;"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="close-blocklist-btn" style="flex:1;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div id="profile-modal-content"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="close-profile-btn">Close</button>
+        <button class="btn-confirm danger-btn" id="block-from-profile-btn">Block</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="delete-account-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Delete Account</div>
+      <p style="color:var(--text-secondary);font-size:.85rem;line-height:1.6;">This will permanently delete your account and all data. This cannot be undone.</p>
+      <input type="password" id="delete-confirm-password" class="inline-input" placeholder="Enter password to confirm" style="margin-top:4px;"/>
+      <div class="error-msg" id="delete-account-error"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="delete-account-cancel">Cancel</button>
+        <button class="btn-confirm danger-btn" id="delete-account-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js","firebase/auth":"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"}}</script>
+<script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>
