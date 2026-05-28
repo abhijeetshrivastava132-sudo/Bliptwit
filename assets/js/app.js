@@ -1,9 +1,35 @@
 import "../../app.js";
 import { getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 
 const authInstance = getAuth(getApp());
 const googleProvider = new GoogleAuthProvider();
+
+function showLoginLoading(){
+  let loader = document.getElementById("google-login-loading");
+  if(!loader){
+    loader = document.createElement("div");
+    loader.id = "google-login-loading";
+    loader.innerHTML = `
+      <div style="position:fixed;inset:0;z-index:99999;background:rgba(7,9,15,.96);display:flex;align-items:center;justify-content:center;padding:24px;">
+        <div style="width:100%;max-width:320px;text-align:center;color:var(--text-primary);">
+          <div style="width:54px;height:54px;margin:0 auto 18px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:var(--accent-primary);animation:btSpin .8s linear infinite;"></div>
+          <div style="font-size:1.08rem;font-weight:700;margin-bottom:6px;">Opening Google login...</div>
+          <div style="font-size:.86rem;color:var(--text-secondary);line-height:1.5;">Please continue with your Google account.</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(loader);
+  }
+  loader.style.display = "block";
+
+  if(!document.getElementById("google-login-loading-style")){
+    const style = document.createElement("style");
+    style.id = "google-login-loading-style";
+    style.textContent = "@keyframes btSpin{to{transform:rotate(360deg)}}";
+    document.head.appendChild(style);
+  }
+}
 
 function setupGoogleOnlyLogin(){
   const signupForm = document.getElementById("signup-form");
@@ -62,18 +88,16 @@ function setupGoogleOnlyLogin(){
 
     try{
       googleLoginBtn.disabled = true;
-      googleLoginBtn.textContent = "Opening Google...";
+      googleLoginBtn.textContent = "Loading...";
       if(loginError) loginError.textContent = "";
-      await signInWithPopup(authInstance, googleProvider);
-      googleLoginBtn.textContent = "Continue with Google";
+      showLoginLoading();
+      await signInWithRedirect(authInstance, googleProvider);
     }catch(error){
-      if(loginError){
-        const code = error?.code || "";
-        loginError.textContent = code.includes("popup-closed-by-user") ? "Google sign-in cancelled" : (error?.message || "Google login failed");
-      }
-      googleLoginBtn.textContent = "Continue with Google";
-    }finally{
+      const loader = document.getElementById("google-login-loading");
+      if(loader) loader.style.display = "none";
+      if(loginError) loginError.textContent = error?.message || "Google login failed";
       googleLoginBtn.disabled = false;
+      googleLoginBtn.textContent = "Continue with Google";
     }
   }, true);
 }
