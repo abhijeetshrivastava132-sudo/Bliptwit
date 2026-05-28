@@ -1,6 +1,6 @@
 import "../../app.js";
 import { getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 const authInstance = getAuth(getApp());
 const googleProvider = new GoogleAuthProvider();
@@ -14,8 +14,8 @@ function showLoginLoading(){
       <div style="position:fixed;inset:0;z-index:99999;background:rgba(7,9,15,.96);display:flex;align-items:center;justify-content:center;padding:24px;">
         <div style="width:100%;max-width:320px;text-align:center;color:var(--text-primary);">
           <div style="width:54px;height:54px;margin:0 auto 18px;border-radius:50%;border:3px solid rgba(255,255,255,.14);border-top-color:var(--accent-primary);animation:btSpin .8s linear infinite;"></div>
-          <div style="font-size:1.08rem;font-weight:700;margin-bottom:6px;">Opening Google login...</div>
-          <div style="font-size:.86rem;color:var(--text-secondary);line-height:1.5;">Please continue with your Google account.</div>
+          <div style="font-size:1.08rem;font-weight:700;margin-bottom:6px;">Opening Google...</div>
+          <div style="font-size:.86rem;color:var(--text-secondary);line-height:1.5;">Complete sign in from the Google popup.</div>
         </div>
       </div>
     `;
@@ -29,6 +29,11 @@ function showLoginLoading(){
     style.textContent = "@keyframes btSpin{to{transform:rotate(360deg)}}";
     document.head.appendChild(style);
   }
+}
+
+function hideLoginLoading(){
+  const loader = document.getElementById("google-login-loading");
+  if(loader) loader.style.display = "none";
 }
 
 function setupGoogleOnlyLogin(){
@@ -91,11 +96,16 @@ function setupGoogleOnlyLogin(){
       googleLoginBtn.textContent = "Loading...";
       if(loginError) loginError.textContent = "";
       showLoginLoading();
-      await signInWithRedirect(authInstance, googleProvider);
+      await signInWithPopup(authInstance, googleProvider);
     }catch(error){
-      const loader = document.getElementById("google-login-loading");
-      if(loader) loader.style.display = "none";
-      if(loginError) loginError.textContent = error?.message || "Google login failed";
+      if(loginError){
+        const code = error?.code || "";
+        if(code.includes("popup-closed-by-user")) loginError.textContent = "Google sign-in cancelled";
+        else if(code.includes("popup-blocked")) loginError.textContent = "Allow popup for Google login";
+        else loginError.textContent = error?.message || "Google login failed";
+      }
+    }finally{
+      hideLoginLoading();
       googleLoginBtn.disabled = false;
       googleLoginBtn.textContent = "Continue with Google";
     }
