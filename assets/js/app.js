@@ -69,25 +69,78 @@ async function handleBetterLogin(event){
   }
 }
 
-async function handleBetterPasswordReset(){
-  const input = document.getElementById("login-username");
-  const errorBox = document.getElementById("login-error");
-  if(!input || !errorBox) return;
+function createResetScreen(){
+  let resetScreen = document.getElementById("forgot-reset-screen");
+  if(resetScreen) return resetScreen;
 
-  errorBox.style.color = "";
-  errorBox.textContent = "";
+  resetScreen = document.createElement("div");
+  resetScreen.id = "forgot-reset-screen";
+  resetScreen.className = "screen forgot-reset-screen";
+  resetScreen.innerHTML = `
+    <div class="forgot-reset-card">
+      <button class="forgot-back-btn" id="forgot-back-btn" type="button" aria-label="Back to login">←</button>
+      <div class="forgot-reset-icon">🔐</div>
+      <h2>Reset Password</h2>
+      <p class="forgot-reset-sub">Enter your username or email. We'll send a secure password reset link to your registered email.</p>
+      <div class="field-group forgot-field-group">
+        <label class="field-label">Username or Email</label>
+        <div class="input-wrap input-with-icon">
+          <span class="field-icon">@</span>
+          <input type="text" id="forgot-identity-input" placeholder="Username or email" autocomplete="username" />
+        </div>
+      </div>
+      <div class="error-msg" id="forgot-reset-message"></div>
+      <button class="btn-primary" id="forgot-send-btn" type="button">Send Reset Link</button>
+      <button class="btn-cancel forgot-login-btn" id="forgot-login-btn" type="button">Back to Login</button>
+      <p class="forgot-reset-note">After clicking the email link, set a new password and return to Bliptwit.</p>
+    </div>
+  `;
+  document.getElementById("app")?.appendChild(resetScreen);
+  return resetScreen;
+}
+
+function showResetScreen(){
+  const loginScreen = document.getElementById("login-screen");
+  const resetScreen = createResetScreen();
+  loginScreen?.classList.remove("active");
+  resetScreen.classList.add("active");
+  const loginValue = document.getElementById("login-username")?.value?.trim() || "";
+  const resetInput = document.getElementById("forgot-identity-input");
+  if(resetInput){
+    resetInput.value = loginValue;
+    setTimeout(()=>resetInput.focus(), 80);
+  }
+}
+
+function showLoginFromReset(){
+  const loginScreen = document.getElementById("login-screen");
+  const resetScreen = document.getElementById("forgot-reset-screen");
+  resetScreen?.classList.remove("active");
+  loginScreen?.classList.add("active");
+}
+
+async function handleBetterPasswordReset(){
+  const input = document.getElementById("forgot-identity-input") || document.getElementById("login-username");
+  const messageBox = document.getElementById("forgot-reset-message") || document.getElementById("login-error");
+  const button = document.getElementById("forgot-send-btn");
+  if(!input || !messageBox) return;
+
+  messageBox.style.color = "";
+  messageBox.textContent = "";
   const id = input.value.trim();
-  if(!id){ errorBox.textContent = "Enter your email or username first."; return; }
+  if(!id){ messageBox.textContent = "Enter your email or username first."; return; }
 
   try{
+    if(button){ button.disabled = true; button.textContent = "Sending..."; }
     const email = await resolveLoginEmail(id);
     await sendPasswordResetEmail(authInstance, email);
-    errorBox.style.color = "var(--accent-primary)";
-    errorBox.textContent = "Password reset link sent. Check inbox/spam.";
-    setTimeout(()=>{ errorBox.style.color = ""; }, 4500);
+    messageBox.style.color = "var(--accent-primary)";
+    messageBox.textContent = "Reset link sent. Check Inbox, Promotions, or Spam.";
   }catch(error){
-    errorBox.style.color = "";
-    errorBox.textContent = authMessage(error);
+    messageBox.style.color = "";
+    messageBox.textContent = authMessage(error);
+  }finally{
+    if(button){ button.disabled = false; button.textContent = "Send Reset Link"; }
   }
 }
 
@@ -152,15 +205,23 @@ function setupImprovedLoginPage(){
     loginSubmit.insertAdjacentElement("afterend", linksRow);
   }
 
+  createResetScreen();
+
   const forgotPasswordBtn = document.getElementById("forgot-password-btn");
   const loginNewUserBtn = document.getElementById("login-new-user-btn");
 
   loginSubmit?.addEventListener("click", handleBetterLogin, true);
   loginForm?.addEventListener("submit", handleBetterLogin, true);
-  forgotPasswordBtn?.addEventListener("click", handleBetterPasswordReset);
+  forgotPasswordBtn?.addEventListener("click", showResetScreen);
   loginNewUserBtn?.addEventListener("click", setSignupMode);
   showLoginToggle?.addEventListener("click", setLoginMode);
   showSignupToggle?.addEventListener("click", setSignupMode);
+  document.getElementById("forgot-send-btn")?.addEventListener("click", handleBetterPasswordReset);
+  document.getElementById("forgot-back-btn")?.addEventListener("click", showLoginFromReset);
+  document.getElementById("forgot-login-btn")?.addEventListener("click", showLoginFromReset);
+  document.getElementById("forgot-identity-input")?.addEventListener("keydown", e=>{
+    if(e.key === "Enter") handleBetterPasswordReset();
+  });
 }
 
 if(document.readyState === "loading"){
