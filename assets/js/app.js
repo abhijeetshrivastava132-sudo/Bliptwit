@@ -144,11 +144,75 @@ async function handleBetterPasswordReset(){
   }
 }
 
+function applyAuthCompactStyles(){
+  if(document.getElementById("signup-compact-style")) return;
+  const style = document.createElement("style");
+  style.id = "signup-compact-style";
+  style.textContent = `
+    #login-screen.signup-mode{
+      overflow:hidden !important;
+      justify-content:center !important;
+      padding:18px 22px !important;
+    }
+    #login-screen.signup-mode .login-logo-wrap{
+      margin-bottom:12px !important;
+    }
+    #login-screen.signup-mode .login-logo-icon{
+      width:58px !important;
+      height:58px !important;
+      margin-bottom:8px !important;
+    }
+    #login-screen.signup-mode .login-logo-icon svg{
+      width:30px !important;
+      height:30px !important;
+    }
+    #login-screen.signup-mode .login-logo-text{
+      font-size:1.25rem !important;
+    }
+    #login-screen.signup-mode .login-logo-sub{
+      display:none !important;
+    }
+    #login-screen.signup-mode #signup-form{
+      gap:8px !important;
+    }
+    #login-screen.signup-mode #signup-form .field-group{
+      gap:5px !important;
+    }
+    #login-screen.signup-mode #signup-form .field-label,
+    #login-screen.signup-mode #signup-form .helper-text,
+    #login-screen.signup-mode #signup-form .auth-note{
+      font-size:.72rem !important;
+    }
+    #login-screen.signup-mode #signup-form input{
+      min-height:42px !important;
+      font-size:.88rem !important;
+    }
+    #login-screen.signup-mode #signup-form .btn-primary,
+    #signup-back-login-btn{
+      min-height:42px !important;
+    }
+    #signup-back-login-btn{
+      width:100%;
+      border:none;
+      border-radius:10px;
+      background:var(--bg-surface2);
+      color:var(--text-primary);
+      font-family:var(--font-sans);
+      font-size:.86rem;
+      font-weight:600;
+      cursor:pointer;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function setLoginMode(){
+  const loginScreen = document.getElementById("login-screen");
   const loginForm = document.getElementById("login-form");
   const signupForm = document.getElementById("signup-form");
   const title = document.querySelector(".auth-page-title");
   const sub = document.querySelector(".auth-page-sub");
+  loginScreen?.classList.remove("signup-mode");
   if(signupForm) signupForm.classList.add("hidden");
   if(loginForm) loginForm.classList.remove("hidden");
   if(title) title.textContent = "Sign in to Bliptwit";
@@ -156,10 +220,12 @@ function setLoginMode(){
 }
 
 function setSignupMode(){
+  const loginScreen = document.getElementById("login-screen");
   const loginForm = document.getElementById("login-form");
   const signupForm = document.getElementById("signup-form");
   const title = document.querySelector(".auth-page-title");
   const sub = document.querySelector(".auth-page-sub");
+  loginScreen?.classList.add("signup-mode");
   if(loginForm) loginForm.classList.add("hidden");
   if(signupForm) signupForm.classList.remove("hidden");
   if(title) title.textContent = "Create your Bliptwit account";
@@ -181,6 +247,7 @@ function setupImprovedLoginPage(){
 
   if(!loginScreen || !loginForm || !signupForm) return;
 
+  applyAuthCompactStyles();
   setLoginMode();
 
   if(authToggle) authToggle.style.display = "none";
@@ -205,6 +272,15 @@ function setupImprovedLoginPage(){
     loginSubmit.insertAdjacentElement("afterend", linksRow);
   }
 
+  let signupBackBtn = document.getElementById("signup-back-login-btn");
+  if(!signupBackBtn){
+    signupBackBtn = document.createElement("button");
+    signupBackBtn.id = "signup-back-login-btn";
+    signupBackBtn.type = "button";
+    signupBackBtn.textContent = "Back to login";
+    signupForm.appendChild(signupBackBtn);
+  }
+
   createResetScreen();
 
   const forgotPasswordBtn = document.getElementById("forgot-password-btn");
@@ -214,6 +290,7 @@ function setupImprovedLoginPage(){
   loginForm?.addEventListener("submit", handleBetterLogin, true);
   forgotPasswordBtn?.addEventListener("click", showResetScreen);
   loginNewUserBtn?.addEventListener("click", setSignupMode);
+  signupBackBtn?.addEventListener("click", setLoginMode);
   showLoginToggle?.addEventListener("click", setLoginMode);
   showSignupToggle?.addEventListener("click", setSignupMode);
   document.getElementById("forgot-send-btn")?.addEventListener("click", handleBetterPasswordReset);
