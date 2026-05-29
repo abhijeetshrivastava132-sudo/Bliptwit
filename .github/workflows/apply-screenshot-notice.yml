@@ -1,0 +1,169 @@
+name: Apply screenshot notice patch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Patch app.js and style.css
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          app_path = Path('app.js')
+          css_path = Path('style.css')
+          app = app_path.read_text()
+          css = css_path.read_text()
+
+          changed = False
+
+          if 'const screenshotNoticeCooldowns = new Map();' not in app:
+              target = 'let ctxMsgId=null,ctxMsgData=null;'
+              replacement = target + "\nconst screenshotNoticeCooldowns = new Map();"
+              if target not in app:
+                  raise SystemExit('Could not find ctxMsgId anchor')
+              app = app.replace(target, replacement, 1)
+              changed = True
+
+          if 'async function sendScreenshotNotice(reason="unknown")' not in app:
+              anchor = "function createWaveformBars(container){\n  container.innerHTML='';\n  for(let i=0;i<20;i++){\n    const bar=document.createElement('div');\n    bar.className='bar';\n    bar.style.height=`${Math.random()*24+4}px`;\n    container.appendChild(bar);\n  }\n}\n"
+              fn = """
+async function sendScreenshotNotice(reason="unknown"){
+  if(!activeChatId) return;
+  if(!username) return;
+  if(!currentUserUid) return;
+
+  const last=screenshotNoticeCooldowns.get(activeChatId)||0;
+  if(Date.now()-last<10000) return;
+  screenshotNoticeCooldowns.set(activeChatId,Date.now());
+
+  const text=`${username} took a screenshot`;
+  try{
+    await addDoc(collection(db,'rooms',activeChatId,'messages'),{
+      type:'system',
+      eventType:'screenshot',
+      text,
+      sender:username,
+      senderUid:currentUserUid,
+      timestamp:serverTimestamp(),
+      reason,
+      createdAtMs:Date.now()
+    });
+    await setDoc(doc(db,'rooms',activeChatId),{
+      lastMessagePreview:text,
+      lastMessageType:'system',
+      lastMessageSenderUid:currentUserUid,
+      updatedAt:serverTimestamp()
+    },{merge:true});
+  }catch(err){
+    console.warn('Screenshot notice failed',err);
+  }
+}
+"""
+              if anchor not in app:
+                  raise SystemExit('Could not find createWaveformBars anchor')
+              app = app.replace(anchor, anchor + fn, 1)
+              changed = True
+
+          old_filter = "const renderableDocs=decryptedDocs.filter(entry=>entry.msg?.type!=='system');"
+          new_filter = """const renderableDocs=decryptedDocs.filter(entry=>{
+      const msg=entry.msg||{};
+      if(msg.type!=='system') return true;
+      return msg.eventType==='screenshot';
+    });"""
+          if old_filter in app:
+              app = app.replace(old_filter, new_filter, 1)
+              changed = True
+          elif "return msg.eventType==='screenshot';" not in app:
+              raise SystemExit('Could not find renderableDocs system filter')
+
+          render_anchor = """      const isSent=isCurrentUserSender(msg);
+      const nextMsg=renderableDocs[i+1]?.msg;
+"""
+          render_insert = """      if(msg.type==='system' && msg.eventType==='screenshot'){
+        const notice=document.createElement('div');
+        notice.className='system-message screenshot-notice';
+        notice.textContent=msg.text||'Screenshot detected';
+        messagesWrap.appendChild(notice);
+        return;
+      }
+      const isSent=isCurrentUserSender(msg);
+      const nextMsg=renderableDocs[i+1]?.msg;
+"""
+          if "notice.className='system-message screenshot-notice';" not in app:
+              if render_anchor not in app:
+                  raise SystemExit('Could not find render insert anchor')
+              app = app.replace(render_anchor, render_insert, 1)
+              changed = True
+
+          detection = """
+// Web browsers do not expose a reliable screenshot event. These listeners only catch some keyboard/print based attempts.
+document.addEventListener('keydown',e=>{
+  const key=String(e.key||'');
+  const lowerKey=key.toLowerCase();
+  if(key==='PrintScreen') sendScreenshotNotice('printscreen_keydown');
+  if((e.ctrlKey||e.metaKey) && e.shiftKey && lowerKey==='s') sendScreenshotNotice('save_shortcut');
+  if((e.ctrlKey||e.metaKey) && lowerKey==='p') sendScreenshotNotice('print_shortcut');
+});
+document.addEventListener('keyup',e=>{
+  if(String(e.key||'')==='PrintScreen') sendScreenshotNotice('printscreen_keyup');
+});
+window.addEventListener('beforeprint',()=>sendScreenshotNotice('beforeprint'));
+"""
+          if 'printscreen_keydown' not in app:
+              anchor = "document.querySelectorAll('.password-toggle').forEach(btn=>{"
+              if anchor not in app:
+                  raise SystemExit('Could not find detection insert anchor')
+              app = app.replace(anchor, detection + "\n" + anchor, 1)
+              changed = True
+
+          css_block = """
+.system-message {
+  align-self: center;
+  max-width: 86%;
+  margin: 10px auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.system-message.screenshot-notice {
+  color: var(--warning);
+  background: rgba(255,179,71,0.08);
+  border-color: rgba(255,179,71,0.18);
+}
+"""
+          if '.system-message.screenshot-notice' not in css:
+              css = css.rstrip() + '\n\n' + css_block
+              changed = True
+
+          if changed:
+              app_path.write_text(app)
+              css_path.write_text(css)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js style.css
+          git commit -m "Add screenshot notice to chats"
+          git push
